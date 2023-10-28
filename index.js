@@ -1,6 +1,6 @@
 const express = require('express');
 const jwt=require('jsonwebtoken')
-// const cookieParser=require("cookie-parser")
+const cookieParser=require("cookie-parser")
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 const cors = require('cors');
@@ -9,13 +9,12 @@ const port=process.env.PORT || 5002
 const app= express()
 
 // middleWare
-
 app.use(cors({
-  origin:['http://localhost:5173/'],
-  credentials:true
-}))
+  origin: ['http://localhost:5173', 'http://localhost:5174'],
+  credentials: true
+}));
 app.use(express.json())
-// app.use(cookieParser())
+app.use(cookieParser())
 
 
 
@@ -47,7 +46,7 @@ async function run() {
     //authentication related API
     app.post('/jwt', async(req,res)=>{
          const user=req.body;
-         console.log(user)
+        //  console.log(user)
          const token=jwt.sign(user,process.env.ACCESS_TOKEN_SECRET,{expiresIn:"1h"})
 
          res
@@ -93,7 +92,7 @@ async function run() {
     })
 
     app.get('/bookings',async(req,res)=>{
-      // console.log('token',req.cookies.token)
+      console.log('token',req.cookies.token)
       let query={}
       if(req.query?.email){
             query={email:req.query.email}
