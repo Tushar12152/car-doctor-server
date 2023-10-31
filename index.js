@@ -1,6 +1,8 @@
 const express = require('express');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
+const jwt=require('jsonwebtoken')
+const cookieParser=require("cookie-parser")
 const cors = require('cors');
 const port=process.env.PORT || 5002
 
@@ -8,7 +10,11 @@ const app= express()
 
 // middleWare
 app.use(express.json())
-app.use(cors())
+app.use(cookieParser())
+app.use(cors({
+   origin:["http://localhost:5173", "http://localhost:5174"],
+   credentials:true
+}))
 
 
 
@@ -28,6 +34,22 @@ const client = new MongoClient(uri, {
   }
 });
 
+//middleware
+
+const logger=(req,res,next)=>{
+    console.log("log:info",req.method,req.url);
+    next();
+}
+
+const verifyToken=(req,res,next)=>{
+   const token=req?.cookies?.token;
+   console.log("token in middleWare",token)
+   next()
+}
+
+
+
+
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
@@ -36,7 +58,33 @@ async function run() {
     const serviceCollection = client.db("car-doctor").collection("services");
     const bookingCollection = client.db("carDoctor").collection("booking");
   
+//Auth related Apis
 
+app.post('/jwt',async(req,res)=>{
+       const user=req.body
+      //  console.log(user)
+      const token=jwt.sign(user,process.env.SECRET,{expiresIn:"1h"})
+       res
+       .cookie("token",token,{
+          httpOnly:true,
+          secure:false,
+          // sameSite:"none"
+       })
+       .send({success:true})
+})
+
+app.post("/logout",async(req,res)=>{
+       const user=req.body;
+      //  console.log("logging OUUUUUUUUt",user);
+       res
+       .clearCookie("token",{maxAge:0})
+       .send({sucess:true})
+})
+
+
+
+
+    //service related api
     app.get('/services',async(req,res)=>{
         const cursor=serviceCollection.find();
         const result=await cursor.toArray();
@@ -68,7 +116,9 @@ async function run() {
 
     })
 
-    app.get('/bookings',async(req,res)=>{
+    app.get('/bookings',logger,verifyToken, async(req,res)=>{
+// console.log('cook cookies',req.cookies);
+
       let query={}
       if(req.query?.email){
             query={email:req.query.email}
