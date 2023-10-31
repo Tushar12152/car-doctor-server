@@ -1,4 +1,6 @@
 const express = require('express');
+const jwt=require('jsonwebtoken')
+const cookieParser=require("cookie-parser")
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 const jwt=require('jsonwebtoken')
@@ -9,12 +11,12 @@ const port=process.env.PORT || 5002
 const app= express()
 
 // middleWare
-app.use(express.json())
-app.use(cookieParser())
 app.use(cors({
-   origin:["http://localhost:5173", "http://localhost:5174"],
-   credentials:true
-}))
+  origin: ['http://localhost:5173', 'http://localhost:5174'],
+  credentials: true
+}));
+app.use(express.json())
+app.use(cors())
 
 
 
@@ -58,33 +60,7 @@ async function run() {
     const serviceCollection = client.db("car-doctor").collection("services");
     const bookingCollection = client.db("carDoctor").collection("booking");
   
-//Auth related Apis
 
-app.post('/jwt',async(req,res)=>{
-       const user=req.body
-      //  console.log(user)
-      const token=jwt.sign(user,process.env.SECRET,{expiresIn:"1h"})
-       res
-       .cookie("token",token,{
-          httpOnly:true,
-          secure:false,
-          // sameSite:"none"
-       })
-       .send({success:true})
-})
-
-app.post("/logout",async(req,res)=>{
-       const user=req.body;
-      //  console.log("logging OUUUUUUUUt",user);
-       res
-       .clearCookie("token",{maxAge:0})
-       .send({sucess:true})
-})
-
-
-
-
-    //service related api
     app.get('/services',async(req,res)=>{
         const cursor=serviceCollection.find();
         const result=await cursor.toArray();
@@ -116,9 +92,7 @@ app.post("/logout",async(req,res)=>{
 
     })
 
-    app.get('/bookings',logger,verifyToken, async(req,res)=>{
-// console.log('cook cookies',req.cookies);
-
+    app.get('/bookings',async(req,res)=>{
       let query={}
       if(req.query?.email){
             query={email:req.query.email}
