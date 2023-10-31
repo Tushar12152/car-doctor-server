@@ -15,7 +15,7 @@ app.use(cors({
   origin: ['http://localhost:5173', 'http://localhost:5174'],
   credentials: true,
 }));
-app.use(cors())
+app.use(cookieParser())
 app.use(express.json())
 
 
@@ -61,6 +61,36 @@ async function run() {
     const bookingCollection = client.db("carDoctor").collection("booking");
   
 
+//Authentication related
+
+   app.post('/jwt',(req,res)=>{
+       const user=req.body;
+       console.log(req.body);
+       const token=jwt.sign(user,process.env.SECRET,{expiresIn:"1h"})
+
+       res
+       .cookie("token",token ,{
+           httpOnly:true,
+           secure:false,
+
+       })
+       .send({success:true})
+   })
+   
+   app.post("/logout",(req,res)=>{
+        const user= req.body;
+        res.clearCookie("token",{maxAge:0}).send({success:true})
+   })
+
+
+
+
+
+
+
+
+   //sevves  related apis 
+
     app.get('/services',async(req,res)=>{
         const cursor=serviceCollection.find();
         const result=await cursor.toArray();
@@ -92,7 +122,8 @@ async function run() {
 
     })
 
-    app.get('/bookings',async(req,res)=>{
+    app.get('/bookings',logger,verifyToken,async(req,res)=>{
+      // console.log("cook cook cookkiihbh",req.cookies);
       let query={}
       if(req.query?.email){
             query={email:req.query.email}
