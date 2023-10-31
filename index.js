@@ -1,6 +1,6 @@
 const express = require('express');
-const jwt=require('jsonwebtoken')
-const cookieParser=require("cookie-parser")
+// const jwt=require('jsonwebtoken')
+// const cookieParser=require("cookie-parser")
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 const jwt=require('jsonwebtoken')
@@ -13,10 +13,10 @@ const app= express()
 // middleWare
 app.use(cors({
   origin: ['http://localhost:5173', 'http://localhost:5174'],
-  credentials: true
+  credentials: true,
 }));
-app.use(express.json())
 app.use(cors())
+app.use(express.json())
 
 
 
